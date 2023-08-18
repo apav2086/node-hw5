@@ -6,7 +6,9 @@ const multer = require('multer');
 const fs = require('fs').promises;
 const path = require('path');
 const uploadPath = path.join(process.cwd(), 'upload');
+// const uploadPath = path.join(process.cwd(), 'tmp');
 const imagesPath = path.join(process.cwd(), 'images');
+// const avatarsPath = path.join(process.cwd(), 'public/avatars');
 const userController = {
     async signup(req, res) {
         try {
@@ -98,9 +100,9 @@ const userController = {
       await fs.rename(tempName, fileName);
      res.json(req.file);
     });
+ 
+    },
     
-  },
-
 };
 
 module.exports = userController;

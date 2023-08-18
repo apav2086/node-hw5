@@ -23,7 +23,9 @@ const UserSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'user',
     },
-
+    avatarURL: {
+     type: String,
+ },
 });
 
 UserSchema.methods.checkPassword = async function (loginPW) {

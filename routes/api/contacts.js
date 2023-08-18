@@ -14,7 +14,7 @@ const auth = require("../../middlewares/auth");
 // Description: This route is used to retrieve all contacts.
 // Controller Function: 'getAllContacts' from the 'contacts' controller module.
 // Middleware: 'ctrlWrapper' will handle any errors that may occur during the controller function execution.
-router.get("/", auth, ctrlWrapper(ctrl.getAllContacts));
+router.get("/", ctrlWrapper(ctrl.getAllContacts));
 
 
 router.get("/:contactId", auth, ctrlWrapper(ctrl.getContactById));
