@@ -1,14 +1,14 @@
 const User = require("../models/users");
-const Employees = require('../models/Employee');
+const Contacts = require('../models/contacts');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const fs = require('fs').promises;
 const path = require('path');
-const uploadPath = path.join(process.cwd(), 'upload');
-// const uploadPath = path.join(process.cwd(), 'tmp');
-const imagesPath = path.join(process.cwd(), 'images');
-// const avatarsPath = path.join(process.cwd(), 'public/avatars');
+// const uploadPath = path.join(process.cwd(), 'upload');
+const tmpPath = path.join(process.cwd(), 'tmp');
+// const imagesPath = path.join(process.cwd(), 'images');
+ const avatarPath = path.join(process.cwd(), 'public/avatars');
 const userController = {
     async signup(req, res) {
         try {
@@ -78,7 +78,7 @@ const userController = {
   async uploadFile(req, res) {
     const storage = multer.diskStorage({
       destination: (req, file, cb) => {
-        cb(null, uploadPath);
+        cb(null, tmpPath);
       },
       filename: (req, file, cb) => {
         cb(null, file.originalname);
@@ -91,12 +91,12 @@ const userController = {
         fileSize: 1048576
       },
     })
-     const user = await Employees.findOne({ _id: '64d40d3e896e967c4e3ae3fc' });
+     const user = await Contacts.findOne({ _id: '64c9add42ed076db1e8f5eec' });
     console.log(user.id);
-    upload.single('picture')(req, res, async function () {
+    upload.single('avatar')(req, res, async function () {
       const { path: tempName } = req.file;
       console.log(path);
-      const fileName = path.join(imagesPath, user.id + '.jpg');
+      const fileName = path.join(avatarPath, user.id + '.jpg');
       await fs.rename(tempName, fileName);
      res.json(req.file);
     });

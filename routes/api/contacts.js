@@ -17,7 +17,7 @@ const auth = require("../../middlewares/auth");
 router.get("/", ctrlWrapper(ctrl.getAllContacts));
 
 
-router.get("/:contactId", auth, ctrlWrapper(ctrl.getContactById));
+router.get("/:contactId", ctrlWrapper(ctrl.getContactById));
 
 // Route: POST '/api/contacts/'
 // Description: This route is used to add a new contact.
