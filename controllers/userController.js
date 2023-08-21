@@ -1,15 +1,13 @@
 const User = require("../models/users");
-const Contacts = require('../models/contacts');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const fs = require('fs').promises;
 const path = require('path');
-// const uploadPath = path.join(process.cwd(), 'upload');
 const tmpPath = path.join(process.cwd(), 'tmp');
-// const imagesPath = path.join(process.cwd(), 'images');
 const avatarPath = path.join(process.cwd(), 'public/avatars');
 const gravatar = require('gravatar');
+const Jimp = require("jimp");
 const userController = {
     async signup(req, res) {
         try {
@@ -23,8 +21,8 @@ const userController = {
                 password: hashed,
                 token: token,
             });
-            const avatarURL = gravatar.url(newUser.email);
-            console.log(avatarURL);
+            const avatarURL = gravatar.url(email);
+            await newUser.save(avatarURL);
             req.session.userToken = token;
             console.log(req.session);
             res.json({ token });
@@ -95,8 +93,9 @@ const userController = {
         fileSize: 1048576
       },
     })
-     const user = await Contacts.findOne({ _id: '64c9add42ed076db1e8f5eec' });
-    console.log(user.id);
+       const { email } = req.body;
+     const user = await User.findOne({ email: email });
+    console.log(user.email);
     upload.single('avatar')(req, res, async function () {
       const { path: tempName } = req.file;
       console.log(path);
@@ -106,7 +105,18 @@ const userController = {
     });
  
     },
-    
+    async avatarUpdate(req, res) {
+            const { email, avatarURL } = req.body;
+         await User.findOne({ email: email })
+Jimp.read(avatarURL)
+  .then((avatar) => {
+    return avatar
+          .resize(250, 250) 
+       })
+  .catch((err) => {
+    console.error(err);
+  });
+     }
 };
 
 module.exports = userController;
