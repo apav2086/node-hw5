@@ -1,6 +1,5 @@
 
 const mongoose = require("mongoose");
-const express = require("express");
 const app = require("./app");
 const session = require("express-session");
 const { DB_HOST, PORT = 3000, JWT_SECRET } = process.env;

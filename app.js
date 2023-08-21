@@ -21,6 +21,8 @@ app.use(express.json());
 // Mount the 'contactsRouter' for all requests starting with '/api/contacts'.
 app.use("/api/contacts", contactsRouter);
 
+app.use(express.static("public"));
+
 // Middleware for handling routes that are not found (404 Not Found).
 app.use((req, res) => {
   res.status(404).json({ message: "Not found" });

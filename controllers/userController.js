@@ -8,7 +8,8 @@ const path = require('path');
 // const uploadPath = path.join(process.cwd(), 'upload');
 const tmpPath = path.join(process.cwd(), 'tmp');
 // const imagesPath = path.join(process.cwd(), 'images');
- const avatarPath = path.join(process.cwd(), 'public/avatars');
+const avatarPath = path.join(process.cwd(), 'public/avatars');
+const gravatar = require('gravatar');
 const userController = {
     async signup(req, res) {
         try {
@@ -22,9 +23,12 @@ const userController = {
                 password: hashed,
                 token: token,
             });
+            const avatarURL = gravatar.url(newUser.email);
+            console.log(avatarURL);
             req.session.userToken = token;
             console.log(req.session);
             res.json({ token });
+        
         } catch (err) {
             console.log(err);
             res.json(err);
