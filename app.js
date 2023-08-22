@@ -3,7 +3,7 @@ const express = require("express");
 const logger = require("morgan");
 const cors = require("cors");
 require("dotenv").config();
-
+ const userRouter = require('./routes/users');
 // Import the 'contactsRouter' module from './routes/api/contacts' to handle contact-related API routes.
 const contactsRouter = require("./routes/api/contacts");
 
@@ -36,5 +36,6 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message });
 });
 
+app.use('/api/users', userRouter);
 // Export the Express application instance to be used in 'server.js'.
 module.exports = app;
