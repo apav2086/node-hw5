@@ -16,13 +16,14 @@ const userController = {
             const token = jwt.sign({ email }, process.env.JWT_SECRET, {
                 expiresIn: '1h',
             });
+             const avatarURL = gravatar.url(email);
             const newUser = await User.create({
                 email: email,
                 password: hashed,
                 token: token,
+                avatarURL: avatarURL,
             });
-            const avatarURL = gravatar.url(email);
-            await newUser.save(avatarURL);
+            await newUser.save();
             req.session.userToken = token;
             console.log(req.session);
             res.json({ token });
@@ -76,9 +77,11 @@ const userController = {
         }
     },
 
-
-  async uploadFile(req, res) {
-    const storage = multer.diskStorage({
+    async avatarUpdate(req, res) {
+           const { email, avatarURL } = req.body;
+     const user = await User.findOne({ email: email });
+      console.log(user.email);
+        const storage = multer.diskStorage({
       destination: (req, file, cb) => {
         cb(null, tmpPath);
       },
@@ -92,30 +95,23 @@ const userController = {
       limits: {
         fileSize: 1048576
       },
-    })
-       const { email } = req.body;
-     const user = await User.findOne({ email: email });
-    console.log(user.email);
-    upload.single('avatar')(req, res, async function () {
-      const { path: tempName } = req.file;
-      console.log(path);
-      const fileName = path.join(avatarPath, user.id + '.jpg');
-      await fs.rename(tempName, fileName);
-     res.json(req.file);
-    });
- 
-    },
-    async avatarUpdate(req, res) {
-            const { email, avatarURL } = req.body;
-         await User.findOne({ email: email })
+    }) 
+        upload.single('avatar')(req, res, async function () {
+            const { path: tempName } = req.file;
+            console.log(path);
+            const fileName = path.join(avatarPath, user.email + '.jpg');
+            await fs.rename(tempName, fileName);
+        });
+     await User.findOne({ email: email })
 Jimp.read(avatarURL)
   .then((avatar) => {
-    return avatar
-          .resize(250, 250) 
-       })
-  .catch((err) => {
-    console.error(err);
-  });
+      return avatar
+          .resize(250, 250);
+      
+  })
+    res.json(req.file);    
+           
+         
      }
 };
 
