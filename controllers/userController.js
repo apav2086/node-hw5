@@ -16,7 +16,7 @@ const userController = {
             const token = jwt.sign({ email }, process.env.JWT_SECRET, {
                 expiresIn: '1h',
             });
-             const avatarURL = gravatar.url(email);
+            const avatarURL = gravatar.url(email);
             const newUser = await User.create({
                 email: email,
                 password: hashed,
@@ -76,6 +76,8 @@ const userController = {
      
         }
     },
+    async uploadFile(req, res) { },
+
 
     async avatarUpdate(req, res) {
            const { email, avatarURL } = req.body;

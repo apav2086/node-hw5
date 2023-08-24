@@ -1,5 +1,5 @@
 // Import the 'contact' service module from the '../../service' directory
-const { contact: service } = require("../../services");
+const { contacts: service } = require("../../services");
 
 // Controller function to handle the addition of a new contact
 const addContact = async (req, res) => {
