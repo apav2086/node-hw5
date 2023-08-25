@@ -4,7 +4,7 @@ const {
   login,
   logout,
   current,
-  // avatarUpdate,
+ avatarUpdate,
   avatarUpload,
 } = require("../controllers/userController");
 
@@ -12,6 +12,7 @@ router.route("/login").post(login);
 router.route("/signup").post(signup);
 router.route("/logout").post(logout);
 router.route("/current").post(current);
-// router.route("/avatars").patch(avatarUpdate);
 router.route('/upload').post(avatarUpload);
+router.route("/avatars").patch(avatarUpdate);
+
 module.exports = router;
