@@ -2,12 +2,12 @@ const User = require("../models/users");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const fs = require('fs').promises;
+ const fs = require('fs').promises;
 const path = require('path');
 const tmpPath = path.join(process.cwd(), 'tmp');
-const avatarPath = path.join(process.cwd(), 'public/avatars');
 const gravatar = require('gravatar');
 const Jimp = require("jimp");
+ 
 const userController = {
     async signup(req, res) {
         try {
@@ -69,6 +69,10 @@ const userController = {
     },
     async current(req, res) {
         const { email, subscription } = req.body;
+        console.log(
+            "🚀 ~ file: userController.js:70 ~ current ~ req.body:",
+            req.body
+        );
         if (req.session.userToken) {
             res.json({ email, subscription });
         } else {
@@ -76,45 +80,65 @@ const userController = {
      
         }
     },
-    async uploadFile(req, res) { },
+    //  async uploadFile(req, res) { },
 
 
-    async avatarUpdate(req, res) {
-           const { email, avatarURL } = req.body;
-     const user = await User.findOne({ email: email });
-      console.log(user.email);
+    async avatarUpload(req, res) {
+        const { email } = req.body; // Extract the email from the request body
+        await User.findOne({ email: email }); // Find the user based on the email
+
+        // Create a Multer storage configuration for uploading avatars
         const storage = multer.diskStorage({
-      destination: (req, file, cb) => {
-        cb(null, tmpPath);
-      },
-      filename: (req, file, cb) => {
-        cb(null, file.originalname);
-      },
-    });
-
-    const upload = multer({
-      storage: storage,
-      limits: {
-        fileSize: 1048576
-      },
-    }) 
-        upload.single('avatar')(req, res, async function () {
-            const { path: tempName } = req.file;
-            console.log(path);
-            const fileName = path.join(avatarPath, user.email + '.jpg');
-            await fs.rename(tempName, fileName);
+            destination: (req, file, cb) => {
+                cb(null, tmpPath); // Set the temporary storage destination
+            },
+            filename: (req, file, cb) => {
+                const uniqueFilename = `${Date.now()}-${file.originalname}`;
+                cb(null, uniqueFilename); // Generate a unique filename for the uploaded file
+            },
         });
-     await User.findOne({ email: email })
-Jimp.read(avatarURL)
-  .then((avatar) => {
-      return avatar
-          .resize(250, 250);
       
-  })
-    res.json(req.file);    
-           
-         
-     }
-};
+        // Configure Multer with the storage and limits
+        const upload = multer({
+            storage: storage,
+            limits: {
+                fileSize: 1048576, // Limit the file size to 1 MB
+            },
+        });
+
+        // Use the 'upload' middleware to process the uploaded file
+        upload.single("avatar")(req, res, async function () {
+    
+            const { path: tempName } = req.body; // Get the temporary path of the uploaded file
+
+            // Define the path where avatars will be stored
+ const avatarPath = path.join(__dirname, "public/avatars");
+
+            const fileName = path.join(avatarPath, email + ".jpg");
+
+           // Generate the filename based on the user's email
+
+            await fs.rename(tempName, fileName); // Rename the temporary file to the final filename
+        });
+    },
+
+    
+     async avatarUpdate(req, res) {
+        
+        // Read the avatarURL from the request body
+        const avatarURL = req.body.avatarURL;
+
+        // Read the avatar image using Jimp
+        const avatar = await Jimp.read(avatarURL);
+
+        // Resize the avatar image to 250x250 pixels and save it
+        await avatar.resize(250, 250).write(fileName);
+
+        // Send a JSON response with the updated avatarURL
+        res.json({
+         avatarURL: `/avatars/${path.basename(fileName)}`
+        });
+    },
+}
 
 module.exports = userController;
