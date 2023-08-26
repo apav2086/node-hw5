@@ -109,7 +109,7 @@ const userController = {
         // Use the 'upload' middleware to process the uploaded file
         upload.single("avatar")(req, res, async function () {
     
-            const { path: tempName } = req.body; // Get the temporary path of the uploaded file
+            const { path: tempName } = req.file; // Get the temporary path of the uploaded file
 
             // Define the path where avatars will be stored
  const avatarPath = path.join(__dirname, "public/avatars");
@@ -123,16 +123,17 @@ const userController = {
     },
 
     
-     async avatarUpdate(req, res) {
-        
+    async avatarUpdate(req, res) {
+          const { email } = req.body;
+         const avatarPath = path.join(__dirname, "public/avatars");
         // Read the avatarURL from the request body
         const avatarURL = req.body.avatarURL;
-
+const fileName = path.join(avatarPath, email + ".jpg");
         // Read the avatar image using Jimp
         const avatar = await Jimp.read(avatarURL);
 
         // Resize the avatar image to 250x250 pixels and save it
-        await avatar.resize(250, 250).write(fileName);
+         avatar.resize(250, 250).write(fileName);
 
         // Send a JSON response with the updated avatarURL
         res.json({
