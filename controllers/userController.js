@@ -1,145 +1,134 @@
 const User = require("../models/users");
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const multer = require('multer');
- const fs = require('fs').promises;
-const path = require('path');
-const tmpPath = path.join(process.cwd(), 'tmp');
-const gravatar = require('gravatar');
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const fs = require("fs").promises;
+const path = require("path");
+const tmpPath = path.join(process.cwd(), "tmp");
+const gravatar = require("gravatar");
 const Jimp = require("jimp");
- 
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
 const userController = {
-    async signup(req, res) {
-        try {
-            const { email, password } = req.body;
-            const hashed = await bcrypt.hash(password, 10);
-            const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-                expiresIn: '1h',
-            });
-            const avatarURL = gravatar.url(email);
-            const newUser = await User.create({
-                email: email,
-                password: hashed,
-                token: token,
-                avatarURL: avatarURL,
-            });
-            await newUser.save();
-            req.session.userToken = token;
-            console.log(req.session);
-            res.json({ token });
-        
-        } catch (err) {
-            console.log(err);
-            res.json(err);
-        }
-    },
-    async login(req, res) {
-        try {
-            const { email, password } = req.body;
-            const singleUser = await User.findOne({ email: email });
-            if (!singleUser) {
-                res.json({ message: 'No user found with that account' });
-                return;
-            }
-           
-            const validatingPW = await singleUser.checkPassword(password);
-            if (!validatingPW) {
-                res.json({ message: 'Wrong Password' });
-                return;
-            }
-            const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-                expiresIn: '1h',
-            });
-            req.session.userToken = token;
-            res.json({ token });
+  async signup(req, res) {
+    try {
+      const { email, password } = req.body;
+      const hashed = await bcrypt.hash(password, 10);
+      const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+      const avatarURL = gravatar.url(email);
+      const newUser = await User.create({
+        email: email,
+        password: hashed,
+        token: token,
+        avatarURL: avatarURL,
+      });
+      await newUser.save();
+      req.session.userToken = token;
+      console.log(req.session);
+      res.json({ token });
+    } catch (err) {
+      console.log(err);
+      res.json(err);
+    }
+  },
+  async login(req, res) {
+    try {
+      const { email, password } = req.body;
+      const singleUser = await User.findOne({ email: email });
+      if (!singleUser) {
+        res.json({ message: "No user found with that account" });
+        return;
+      }
 
-        } catch (err) {
-            console.log(err);
-            res.json(err);
-        }
-    },
-    async logout(req, res) {
-        if (req.session.userToken) {
-            req.session.destroy(() => {
-                res.json({ message: 'User was signed out' });
-            })
-        } else {
-            res.json({ message: 'User is already signed out' })
-        }
-    },
-    async current(req, res) {
-        const { email, subscription } = req.body;
-        console.log(
-            "🚀 ~ file: userController.js:70 ~ current ~ req.body:",
-            req.body
-        );
-        if (req.session.userToken) {
-            res.json({ email, subscription });
-        } else {
-            res.json({ message: 'Not authorized' })
-     
-        }
-    },
-    //  async uploadFile(req, res) { },
+      const validatingPW = await singleUser.checkPassword(password);
+      if (!validatingPW) {
+        res.json({ message: "Wrong Password" });
+        return;
+      }
+      const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+      req.session.userToken = token;
+      res.json({ token });
+    } catch (err) {
+      console.log(err);
+      res.json(err);
+    }
+  },
+  async logout(req, res) {
+    if (req.session.userToken) {
+      req.session.destroy(() => {
+        res.json({ message: "User was signed out" });
+      });
+    } else {
+      res.json({ message: "User is already signed out" });
+    }
+  },
+  async current(req, res) {
+    const { email, subscription } = req.body;
+    console.log(
+      "🚀 ~ file: userController.js:70 ~ current ~ req.body:",
+      req.body
+    );
+    if (req.session.userToken) {
+      res.json({ email, subscription });
+    } else {
+      res.json({ message: "Not authorized" });
+    }
+  },
 
+  // This is a middleware that uses the 'upload' multer instance to handle a single file upload with the field name "avatar".
+  avatarUpload: upload.single("avatar"),
 
-    async avatarUpload(req, res) {
-        const { email } = req.body; // Extract the email from the request body
-        await User.findOne({ email: email }); // Find the user based on the email
+  async handleAvatarUpload(req, res) {
+    try {
+      const { email } = req.body; // Extract the email from the request body
 
-        // Create a Multer storage configuration for uploading avatars
-        const storage = multer.diskStorage({
-            destination: (req, file, cb) => {
-                cb(null, tmpPath); // Set the temporary storage destination
-            },
-            filename: (req, file, cb) => {
-                const uniqueFilename = `${Date.now()}-${file.originalname}`;
-                cb(null, uniqueFilename); // Generate a unique filename for the uploaded file
-            },
-        });
-      
-        // Configure Multer with the storage and limits
-        const upload = multer({
-            storage: storage,
-            limits: {
-                fileSize: 1048576, // Limit the file size to 1 MB
-            },
-        });
+      const uploadedFileBuffer = req.file.buffer; // Get the buffer containing the uploaded file's binary data
+      const avatarPath = path.join(process.cwd(), "public", "avatars"); // Construct the path to the avatars directory
+      const fileName = path.join(avatarPath, email + ".jpg"); // Construct the path to the desired file location
 
-        // Use the 'upload' middleware to process the uploaded file
-        upload.single("avatar")(req, res, async function () {
-    
-            const { path: tempName } = req.file; // Get the temporary path of the uploaded file
+      await fs.writeFile(fileName, uploadedFileBuffer); // Write the binary data to the file
 
-            // Define the path where avatars will be stored
- const avatarPath = path.join(__dirname, "public/avatars");
+      // Find the user based on their email and update their avatarURL field
+      const updatedUser = await User.findOneAndUpdate(
+        { email: email },
+        { avatarURL: `/avatars/${email}.jpg` }, // Update the avatarURL field
+        { new: true } // Return the updated user object
+      );
 
-            const fileName = path.join(avatarPath, email + ".jpg");
+      // Send a JSON response indicating successful avatar upload along with the updated user object
+      res.json({
+        message: "Avatar uploaded successfully",
+        user: updatedUser,
+      });
+    } catch (error) {
+      console.log("Error uploading avatar", error); // Log the error if something goes wrong
+      res.status(500).json({ message: "Error uploading avatar" }); // Send an error response with a 500 status code
+    }
+  },
 
-           // Generate the filename based on the user's email
+  async avatarUpdate(req, res) {
+    const { email } = req.body;
+    const avatarPath = path.join(__dirname, "public/avatars");
+    // Read the avatarURL from the request body
+    const avatarURL = req.body.avatarURL;
+    const fileName = path.join(avatarPath, email + ".jpg");
+    // Read the avatar image using Jimp
+    const avatar = await Jimp.read(avatarURL);
 
-            await fs.rename(tempName, fileName); // Rename the temporary file to the final filename
-        });
-    },
+    // Resize the avatar image to 250x250 pixels and save it
+    avatar.resize(250, 250).write(fileName);
 
-    
-    async avatarUpdate(req, res) {
-          const { email } = req.body;
-         const avatarPath = path.join(__dirname, "public/avatars");
-        // Read the avatarURL from the request body
-        const avatarURL = req.body.avatarURL;
-const fileName = path.join(avatarPath, email + ".jpg");
-        // Read the avatar image using Jimp
-        const avatar = await Jimp.read(avatarURL);
-
-        // Resize the avatar image to 250x250 pixels and save it
-         avatar.resize(250, 250).write(fileName);
-
-        // Send a JSON response with the updated avatarURL
-        res.json({
-         avatarURL: `/avatars/${path.basename(fileName)}`
-        });
-    },
-}
+    // Send a JSON response with the updated avatarURL
+    res.json({
+      avatarURL: `/avatars/${path.basename(fileName)}`,
+    });
+  },
+};
 
 module.exports = userController;
