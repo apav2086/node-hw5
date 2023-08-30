@@ -14,6 +14,6 @@ router.route("/signup").post(signup);
 router.route("/logout").post(logout);
 router.route("/current").post(current);
 router.route("/upload").post(avatarUpload, handleAvatarUpload);
-router.route("/avatars").patch(avatarUpdate);
+router.route("/avatars").patch(avatarUpload, avatarUpdate);
 
 module.exports = router;

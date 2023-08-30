@@ -113,21 +113,38 @@ const userController = {
   },
 
   async avatarUpdate(req, res) {
+    try {
     const { email } = req.body;
-    const avatarPath = path.join(__dirname, "public/avatars");
+    const avatarPath = path.join(process.cwd(), "public", "avatars");
     // Read the avatarURL from the request body
-    const avatarURL = req.body.avatarURL;
-    const fileName = path.join(avatarPath, email + ".jpg");
-    // Read the avatar image using Jimp
-    const avatar = await Jimp.read(avatarURL);
+      const fileName = path.join(avatarPath, email + ".jpg");
+      
+ // Read the uploaded avatar buffer from the request
+      const uploadedFileBuffer = req.file.buffer;
+
+     // Use Jimp to read the avatar image from the buffer
+      const avatar = await Jimp.read(uploadedFileBuffer);
 
     // Resize the avatar image to 250x250 pixels and save it
-    avatar.resize(250, 250).write(fileName);
+    avatar.resize(250, 250);
+ // Delete the previous avatar image if it exists
+      try {
+        await fs.unlink(fileName);
+      } catch (unlinkError) {
+        // Handle the error if the file doesn't exist
+      }
 
-    // Send a JSON response with the updated avatarURL
-    res.json({
-      avatarURL: `/avatars/${path.basename(fileName)}`,
-    });
+      // Write the updated avatar image back to the file
+      await avatar.writeAsync(fileName);
+
+      // Send a JSON response with the updated avatarURL
+      res.json({
+        avatarURL: `/avatars/${email}.jpg`,
+      });
+    } catch (error) {
+      console.log("Error updating avatar", error);
+      res.status(500).json({ message: "Error updating avatar" });
+    }
   },
 };
 
